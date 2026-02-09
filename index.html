@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Listening Generator (Gemini)</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>IELTS Listening Exam Generator</h1>
+            <p>Generate high-quality IELTS listening questions using Gemini AI</p>
+        </header>
+
+        <main>
+            <section class="config-section">
+                <div class="input-group">
+                    <label for="apiKey">Gemini API Key</label>
+                    <input type="password" id="apiKey" placeholder="Enter your Gemini API Key here..."
+                        autocomplete="off">
+                    <small>Your key is stored locally in your browser session only.</small>
+                </div>
+            </section>
+
+            <section class="input-section">
+                <div class="input-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label for="transcriptInput">Audio Transcript / Source Text</label>
+                        <button id="sampleBtn" class="secondary-btn"
+                            style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">Load Sample</button>
+                    </div>
+                    <textarea id="transcriptInput"
+                        placeholder="Paste the transcript of the conversation or lecture here..."></textarea>
+                </div>
+                <button id="generateBtn" class="primary-btn">
+                    <span class="btn-text">Generate Exam</span>
+                    <span class="loader"></span>
+                </button>
+            </section>
+
+            <section id="resultSection" class="result-section hidden">
+                <div class="result-header">
+                    <h2>Generated Exam</h2>
+                    <div class="actions">
+                        <button id="copyBtn" class="secondary-btn">Copy to Clipboard</button>
+                    </div>
+                </div>
+                <div id="outputContent" class="output-content"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
