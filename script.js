@@ -1,39 +1,33 @@
+
 const SYSTEM_PROMPT = `
+You are an expert IELTS exam creator. Your task is to generate a high-quality IELTS Listening exam section based on the provided text.
+
 Requirements:
-Exam type: IELTS Listening
-Total parts: 4
-Difficulty progression: Part 1 (easy) -> Part 4 (hard)
+- Exam type: IELTS Listening
+- Total parts: 4
+- Difficulty progression: Part 1 (easy) -> Part 4 (hard)
 
-For each part:
-- Match the official IELTS listening style
-- Use appropriate question types
-- Ensure questions are natural, exam-like, and not AI-obvious
-- Include realistic distractors and paraphrasing
-
-Question type distribution:
-- Part 1: Form completion, short answer, numbers, names
-- Part 2: Multiple choice, map labeling, matching
-- Part 3: Multiple choice, matching opinions, academic discussion
-- Part 4: Sentence completion, summary completion (academic lecture)
+Structure:
+- Part 1: Social context conversation (Form completion, names, numbers)
+- Part 2: Monologue in social context (Map labeling, Multiple choice)
+- Part 3: Education/Training conversation (Multiple choice, Matching)
+- Part 4: Academic lecture (Sentence completion, Summary)
 
 Rules:
-- Do NOT copy exact words from the audio; paraphrase whenever possible
-- Answers must be clearly inferable from the audio
-- Avoid ambiguous or multiple-correct answers
-- Use British English spelling
-- Do not explain the answers unless explicitly requested
+- Do NOT copy exact words from the source text where synonyms work better.
+- Answers must be logically inferable from the text provided.
+- Use British English spelling.
 
-Output format:
-- Clearly separate Part 1, Part 2, Part 3, Part 4
-- Number all questions (1-10, 11-20, 21-30, 31-40)
-- Provide an answer key at the end
-- Tag and categorize all generated questions with metadata:
-  - Exam type (IELTS, TOEFL, etc.)
-  - Part number
-  - Question type
-  - Difficulty level
-  - Topic (education, travel, science, daily conversation, etc.)
+Output Format:
+Please format the output clearly with:
+1. [PART X] Heading
+2. Question numbers (1-10, etc.)
+3. The Question Text
+4. ANSWER KEY section at the very bottom.
 `;
+
+// API Key từ Google AI Studio
+const API_KEY = 'AIzaSyDwLCHsw4DRmR_ev41gu7XDmzNmpCSkcmE';
 
 const SAMPLE_TEXTS = [
     `[PART 1 CONVERSATION]
@@ -76,7 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentSampleIndex = 0;
 
-    // Load API Key from localStorage
+    // Auto-load API key
+    apiKeyInput.value = API_KEY;
+
+    // Check localStorage for saved key (override if exists)
     const storedKey = localStorage.getItem('gemini_api_key');
     if (storedKey) {
         apiKeyInput.value = storedKey;
@@ -90,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Sample Text Logic
     sampleBtn.addEventListener('click', () => {
         transcriptInput.value = SAMPLE_TEXTS[currentSampleIndex];
-        currentSampleIndex = (currentSampleIndex + 1) % SAMPLE_TEXTS.length; // Toggle between samples
+        currentSampleIndex = (currentSampleIndex + 1) % SAMPLE_TEXTS.length;
     });
 
     // Generate Logic
@@ -118,16 +115,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await callGeminiAPI(apiKey, transcript);
 
             if (result.error) {
+                console.error("API Error Details:", result.error);
                 outputContent.textContent = `Error: ${result.error.message || JSON.stringify(result.error)}`;
             } else {
-                // Determine text content from response structure
-                const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated. Please check your text input.";
                 outputContent.textContent = text;
             }
 
             resultSection.classList.remove('hidden');
         } catch (error) {
-            outputContent.textContent = `Network/System Error: ${error.message}`;
+            console.error("Network Error:", error);
+            outputContent.textContent = `Network/System Error: ${error.message}. Please check console (F12) for details.`;
             resultSection.classList.remove('hidden');
         } finally {
             generateBtn.classList.remove('loading');
@@ -148,20 +146,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function callGeminiAPI(apiKey, userText) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Model chính xác: gemini-2.5-flash (stable, mới nhất 2026) với v1beta
+    const modelName = 'gemini-2.5-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
-    // Construct payload
-    // We send the system prompt as the first "user" message for broader compatibility, or use system_instruction if using v1beta.
-    // Let's use system_instruction for cleaner separation as we use v1beta.
+    const combinedPrompt = `${SYSTEM_PROMPT}\n\nHere is the source text to generate questions from:\n\n${userText}`;
 
     const payload = {
         contents: [{
             role: "user",
-            parts: [{ text: `Here is the transcript/text source for the exam generation:\n\n${userText}` }]
+            parts: [{ text: combinedPrompt }]
         }],
-        system_instruction: {
-            parts: [{ text: SYSTEM_PROMPT }]
-        },
         generationConfig: {
             temperature: 0.7,
             topK: 40,
